@@ -8,11 +8,15 @@ import json
 # 1. Configuración de página principal
 st.set_page_config(layout="wide", page_title="Gestor Académico")
 
-# 2. Estilos personalizados Premium (CSS)
+# 2. Estilos personalizados Premium (CSS) con íconos vectoriales
 st.markdown("""
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     .titulo-principal { font-size: 2.5rem; font-weight: 600; color: #0F172A; margin-bottom: 5px; }
     .subtitulo { font-size: 1.1rem; color: #475569; margin-bottom: 30px; font-weight: 400; }
+    
+    .text-blue { color: #1E3A8A; }
+    .text-orange { color: #EA580C; }
     
     .tarjeta-aula {
         background-color: #FFFFFF; 
@@ -25,6 +29,7 @@ st.markdown("""
         color: #1E293B; 
         text-align: center; 
         box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        border-bottom: 3px solid #1E3A8A;
     }
     
     .metric-container {
@@ -37,18 +42,21 @@ st.markdown("""
         display: inline-block; 
         margin-bottom: 25px; 
         border: 1px solid #E2E8F0; 
+        border-left: 4px solid #EA580C;
         box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     
-    .alerta-choque {
-        background-color: #FEF2F2; 
-        color: #991B1B; 
-        padding: 16px;
-        border-radius: 6px; 
-        margin-bottom: 12px; 
-        border-left: 4px solid #EF4444;
+    .alert-custom {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        font-weight: 500;
         font-size: 0.95rem;
     }
+    .alert-info-custom { background-color: #E0F2FE; color: #075985; border-left: 4px solid #1E3A8A; } /* Azul oscuro */
+    .alert-success-custom { background-color: #ECFCCB; color: #3F6212; border-left: 4px solid #84CC16; }
+    .alert-warning-custom { background-color: #FFEDD5; color: #9A3412; border-left: 4px solid #EA580C; } /* Naranja */
+    .alert-error-custom { background-color: #FEE2E2; color: #991B1B; border-left: 4px solid #EF4444; }
     
     .stTabs [data-baseweb="tab-list"] {
         gap: 20px;
@@ -62,6 +70,11 @@ st.markdown("""
         gap: 1px;
         padding-top: 10px;
         padding-bottom: 10px;
+        color: #1E3A8A;
+        font-weight: 600;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        color: #EA580C;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -72,6 +85,12 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
 RESERVAS_FILE = os.path.join(DATA_DIR, "reservas_temporales.json")
+
+def mostrar_alerta(mensaje, tipo="info", icono="fa-info-circle"):
+    css_class = f"alert-custom alert-{tipo}-custom"
+    color_icon = "text-blue" if tipo == "info" else "text-orange" if tipo == "warning" else ""
+    # Override de color para ícono si es success/error
+    st.markdown(f"<div class='{css_class}'><i class='fa-solid {icono} {color_icon}' style='margin-right:8px;'></i> {mensaje}</div>", unsafe_allow_html=True)
 
 def cargar_reservas():
     if os.path.exists(RESERVAS_FILE):
@@ -94,8 +113,8 @@ def obtener_archivo_guardado():
     return None
 
 # Barra lateral para carga
-st.sidebar.header("Base de Datos")
-st.sidebar.info("El sistema almacenará el último archivo cargado para evitar subidas recurrentes.")
+st.sidebar.markdown('<h3><i class="fa-solid fa-server text-blue"></i> Base de Datos</h3>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="alert-custom alert-info-custom"><i class="fa-solid fa-cloud-arrow-up text-blue"></i> El sistema almacenará el último archivo cargado para evitar subidas recurrentes.</div>', unsafe_allow_html=True)
 uploaded_file = st.sidebar.file_uploader("Actualizar archivo de horarios (.xlsx, .csv)", type=["xlsx", "csv"])
 
 if uploaded_file is not None:
@@ -106,15 +125,15 @@ if uploaded_file is not None:
     with open(ruta_guardado, "wb") as f:
         f.write(uploaded_file.getbuffer())
     
-    st.sidebar.success("Archivo almacenado correctamente.")
+    st.sidebar.markdown('<div class="alert-custom alert-success-custom"><i class="fa-solid fa-check"></i> Archivo almacenado correctamente.</div>', unsafe_allow_html=True)
 
 archivo_activo = obtener_archivo_guardado()
 
 if archivo_activo:
-    st.sidebar.success(f"Origen de datos: {os.path.basename(archivo_activo)}")
+    st.sidebar.markdown(f'<div class="alert-custom alert-success-custom"><i class="fa-solid fa-database"></i> Origen de datos: {os.path.basename(archivo_activo)}</div>', unsafe_allow_html=True)
 
-st.markdown('<p class="titulo-principal">Gestor Académico UNICEN</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitulo">Sistema integral de consulta, auditoría y seguimiento de asignaciones de aulas e infraestructura.</p>', unsafe_allow_html=True)
+st.markdown('<p class="titulo-principal"><i class="fa-solid fa-building-columns text-blue"></i> Gestor Académico UNICEN</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitulo"><i class="fa-solid fa-chart-network text-orange"></i> Sistema integral de consulta, auditoría y seguimiento de asignaciones de aulas e infraestructura.</p>', unsafe_allow_html=True)
 
 # 3. Mapeos de horarios 
 MAPEO_REGULAR = {
@@ -174,14 +193,14 @@ def cargar_datos(ruta_archivo):
         else:
             df = pd.read_excel(ruta_archivo)
     except Exception as e:
-        st.error(f"Error en la lectura del archivo: {e}")
+        mostrar_alerta(f"Error en la lectura del archivo: {e}", "error", "fa-circle-xmark")
         return None
     
     df.columns = df.columns.astype(str).str.strip().str.upper()
     return df
 
 if not archivo_activo:
-    st.info("Para iniciar, por favor cargue el archivo Excel o CSV correspondiente al plan semestral.")
+    mostrar_alerta("Para iniciar, por favor cargue el archivo Excel o CSV correspondiente al plan semestral.", "info", "fa-circle-info")
 else:
     try:
         with st.spinner("Procesando estructura de datos..."):
@@ -190,11 +209,10 @@ else:
         if df is not None:
             dias_semana = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"]
             
-            # Verificar si la columna TORRE existe antes de usarla
             if 'TORRE' in df.columns:
                 torres = sorted([t for t in df['TORRE'].dropna().astype(str).str.upper().str.strip().unique() if t])
             else:
-                st.warning("No se encontró la columna clave 'TORRE'. La filtración por bloque no está disponible.")
+                mostrar_alerta("No se encontró la columna clave 'TORRE'. La filtración por bloque no está disponible.", "warning", "fa-triangle-exclamation")
                 torres = []
                 
             dias_presentes = [d for d in dias_semana if d in df.columns]
@@ -213,6 +231,7 @@ else:
             
             # --- PESTAÑA 1: AULAS LIBRES ---
             with tab_libres:
+                st.markdown("### <i class='fa-solid fa-door-open text-blue'></i> Disponibilidad de Aulas", unsafe_allow_html=True)
                 modo_busqueda = st.radio("Criterio de Búsqueda:", ["Planificación Semestral (Día de la semana)", "Consulta Específica (Fecha calendario)"], horizontal=True)
                 
                 col1, col2, col3 = st.columns(3)
@@ -220,12 +239,12 @@ else:
                     if "Semestral" in modo_busqueda:
                         dias_sel = st.multiselect("Día(s) de la semana:", dias_semana, default=["LUNES"])
                         fecha_sel = None
-                        st.caption("Criterio general que excluye contingencias y excepciones operativas.")
+                        st.caption("Criterio general que excluye contingencias operativas.")
                     else:
                         fecha_sel = st.date_input("Fecha a consultar:")
                         dias_map = {0: "LUNES", 1: "MARTES", 2: "MIERCOLES", 3: "JUEVES", 4: "VIERNES", 5: "SABADO", 6: "DOMINGO"}
                         dia_busqueda = dias_map[fecha_sel.weekday()]
-                        st.success(f"Día determinado: {dia_busqueda}")
+                        mostrar_alerta(f"Día determinado: {dia_busqueda}", "info", "fa-calendar-day")
                         dias_sel = [dia_busqueda] if dia_busqueda in dias_presentes else []
                         
                 with col2:
@@ -240,22 +259,25 @@ else:
                     bloques_sel = st.multiselect("Franja(s) Horaria(s):", nombres_bloques, default=[nombres_bloques[0]] if nombres_bloques else [])
                     
                 st.markdown("<br>", unsafe_allow_html=True)
+                col_btn, _, _ = st.columns([1,1,1])
+                with col_btn:
+                    buscar_aulas_btn = st.button("Ejecutar Consulta de Disponibilidad", use_container_width=True, type="primary")
                 
-                if st.button("Ejecutar Consulta de Disponibilidad", use_container_width=True, type="primary"):
+                if buscar_aulas_btn:
                     st.markdown("<hr style='margin-top:0px; margin-bottom:25px;'>", unsafe_allow_html=True)
                     if not dias_sel:
                         if "Específica" in modo_busqueda:
-                            st.warning(f"El vector {dia_busqueda} no cuenta con datos de estructura base.")
+                            mostrar_alerta(f"El vector {dia_busqueda} no cuenta con datos de estructura base.", "warning", "fa-triangle-exclamation")
                         else:
-                            st.warning("Especifique al menos un día en el formulario.")
+                            mostrar_alerta("Especifique al menos un día en el formulario.", "warning", "fa-triangle-exclamation")
                     elif not bloques_sel:
-                        st.warning("Seleccione al menos una franja horaria.")
+                        mostrar_alerta("Seleccione al menos una franja horaria.", "warning", "fa-triangle-exclamation")
                     elif not torres:
-                        st.error("Restricción de datos: No se encontró la columna 'TORRE'.")
+                        mostrar_alerta("Restricción de datos: No se encontró la columna 'TORRE'.", "error", "fa-circle-xmark")
                     elif 'HR/DIA' not in df.columns:
-                        st.error("Restricción de datos: Faltan registros horarios ('HR/DIA').")
+                        mostrar_alerta("Restricción de datos: Faltan registros horarios ('HR/DIA').", "error", "fa-circle-xmark")
                     elif 'AULA' not in df.columns:
-                        st.error("Restricción de datos: No hay identificadores de recintos ('AULA').")
+                        mostrar_alerta("Restricción de datos: No hay identificadores de recintos ('AULA').", "error", "fa-circle-xmark")
                     else:
                         dias_validos = [d for d in dias_sel if d in df.columns]
                         if dias_validos:
@@ -279,7 +301,6 @@ else:
                                             
                             aulas_comunes = sorted(list(aulas_comunes)) if aulas_comunes else []
                             
-                            # Filtro Maestro: Cruce con Reservas Temporales
                             if "Específica" in modo_busqueda and fecha_sel:
                                 reservas = cargar_reservas()
                                 aulas_finales = []
@@ -307,16 +328,17 @@ else:
                                 aulas_comunes = aulas_finales
 
                             if aulas_comunes:
-                                st.markdown(f'<div class="metric-container">Capacidad Disponible: {len(aulas_comunes)} Recintos</div>', unsafe_allow_html=True)
+                                st.markdown(f'<div class="metric-container"><i class="fa-solid fa-check-double text-blue"></i> Capacidad Disponible: {len(aulas_comunes)} Recintos</div>', unsafe_allow_html=True)
                                 cols_grid = st.columns(5)
                                 for idx, aula in enumerate(aulas_comunes):
                                     with cols_grid[idx % 5]:
-                                        st.markdown(f'<div class="tarjeta-aula">{aula}</div>', unsafe_allow_html=True)
+                                        st.markdown(f'<div class="tarjeta-aula"><i class="fa-solid fa-chalkboard text-orange" style="margin-right:5px;"></i> {aula}</div>', unsafe_allow_html=True)
                             else:
-                                st.info(f"Capacidad del recinto agotada para la franja seleccionada en la torre o edificio {torre_sel}.")
+                                mostrar_alerta(f"Capacidad del recinto agotada para la franja seleccionada en la torre o edificio {torre_sel}.", "info", "fa-circle-info")
 
             # --- PESTAÑA 2: BUSQUEDA NORMAL ---
             with tab_busqueda:
+                st.markdown("### <i class='fa-solid fa-magnifying-glass text-orange'></i> Consulta de Asignaciones", unsafe_allow_html=True)
                 docentes = set()
                 materias = set()
                 for dia in dias_presentes:
@@ -331,7 +353,11 @@ else:
                 with c1: sel_docente = st.selectbox("Docente Asignado:", [""] + sorted(list(docentes)))
                 with c2: sel_materia = st.selectbox("Unidad Académica:", [""] + sorted(list(materias)))
                 
-                if st.button("Consultar Asignación", type="primary"):
+                col_btn, _, _ = st.columns([1,1,1])
+                with col_btn:
+                    buscar_clases_btn = st.button("Consultar Asignación", type="primary")
+                
+                if buscar_clases_btn:
                     resultados = []
                     for index, row in df.iterrows():
                         for dia in dias_presentes:
@@ -344,16 +370,20 @@ else:
                     if resultados:
                         st.dataframe(pd.DataFrame(resultados), use_container_width=True, hide_index=True)
                     elif sel_docente or sel_materia:
-                        st.info("Sin registros concordantes en la base de datos.")
+                        mostrar_alerta("Sin registros concordantes en la base de datos.", "info", "fa-circle-info")
                     else:
-                        st.warning("Seleccione al menos un parámetro de búsqueda.")
+                        mostrar_alerta("Seleccione al menos un parámetro de búsqueda.", "warning", "fa-triangle-exclamation")
 
             # --- PESTAÑA 3: AUDITORÍA DE HORARIOS ---
             with tab_auditoria:
-                st.markdown("### Reporte Analítico de Conflictos")
+                st.markdown("### <i class='fa-solid fa-clipboard-check text-blue'></i> Reporte Analítico de Conflictos", unsafe_allow_html=True)
                 st.write("Herramienta estructurada para el análisis y detección temprana de solapamientos e irregularidades operativas de docentes en los horarios emitidos.")
                 
-                if st.button("Ejecutar Auditoría Profunda", type="primary"):
+                col_btn, _, _ = st.columns([1,1,1])
+                with col_btn:
+                    auditar_btn = st.button("Ejecutar Auditoría Profunda", type="primary")
+                
+                if auditar_btn:
                     mapa_asignaciones = {}
                     
                     for index, row in df.iterrows():
@@ -385,7 +415,7 @@ else:
                             })
                             
                     if conflictos:
-                        st.error(f"Sistema emitió aviso de nivel rojo: {len(conflictos)} contingencias detectadas.")
+                        mostrar_alerta(f"Sistema emitió aviso de nivel rojo: {len(conflictos)} contingencias detectadas.", "error", "fa-circle-exclamation")
                         for conf in conflictos:
                             st.markdown(f"""
                             <div class="alerta-choque">
@@ -395,13 +425,13 @@ else:
                             </div>
                             """, unsafe_allow_html=True)
                     else:
-                        st.success("Validación satisfactoria. Cero incidencias reportadas en la actual estructura.")
+                        mostrar_alerta("Validación satisfactoria. Cero incidencias reportadas en la actual estructura.", "success", "fa-check-double")
 
             # --- PESTAÑA 4: DÓNDE ESTÁ AHORA ---
             with tab_ahora:
-                st.markdown("### Panel de Control Operativo")
+                st.markdown("### <i class='fa-solid fa-location-dot text-orange'></i> Panel de Control Operativo", unsafe_allow_html=True)
                 
-                modo_prueba = st.checkbox("Activar Entorno de Pruebas (Simulación Predictiva/Retrospectiva)")
+                modo_prueba = st.checkbox("Activar Entorno de Pruebas (Simulación Predictiva)")
                 
                 if modo_prueba:
                     col_p1, col_p2 = st.columns(2)
@@ -416,10 +446,10 @@ else:
                     except:
                         dia_actual = "LUNES"
                     hora_actual = now.time()
-                    st.info(f"Sincronizado: Servidor operando sobre la matriz del {dia_actual}, a las {hora_actual.strftime('%H:%M')}")
+                    mostrar_alerta(f"Sincronizado: Servidor operando sobre la matriz del {dia_actual}, a las {hora_actual.strftime('%H:%M')}", "info", "fa-clock")
                 
                 if dia_actual not in dias_presentes:
-                    st.warning("Los parámetros ingresados no cuentan con despliegue en la base de datos.")
+                    mostrar_alerta("Los parámetros ingresados no cuentan con despliegue en la base de datos.", "warning", "fa-triangle-exclamation")
                 else:
                     lista_docentes = sorted(list(docentes))
                     docente_buscar = st.selectbox("Filtro Activo de Seguimiento (Docente):", [""] + lista_docentes)
@@ -436,19 +466,19 @@ else:
                                     if m_doc and docente_buscar in val_celda:
                                         torre = row.get("TORRE", "")
                                         aula = row.get("AULA", "")
-                                        st.success(f"Confirmación de Asignación Física: {docente_buscar}")
-                                        st.markdown(f'<div class="metric-container">Planta Operativa: {torre} | Identificador de Recinto: {aula}</div>', unsafe_allow_html=True)
+                                        mostrar_alerta(f"Confirmación de Asignación Física: {docente_buscar}", "success", "fa-user-check")
+                                        st.markdown(f'<div class="metric-container"><i class="fa-solid fa-map-pin text-orange"></i> Planta Operativa: {torre} | Identificador de Recinto: {aula}</div>', unsafe_allow_html=True)
                                         st.write(f"**Referencia Descriptiva:** {val_celda}")
                                         st.write(f"**Intervalo de Ocupación:** {hora_bloque}")
                                         encontrado = True
                                         break
                         
                         if not encontrado:
-                            st.info(f"Sin actividad reportada en la franja transitoria actual respecto de la solicitud de búsqueda.")
+                            mostrar_alerta("Sin actividad reportada en la franja transitoria actual respecto de la solicitud de búsqueda.", "info", "fa-circle-info")
 
             # --- PESTAÑA 5: GESTIÓN DE RESERVAS ---
             with tab_reservas:
-                st.markdown("### Excepciones Operativas")
+                st.markdown("### <i class='fa-solid fa-calendar-days text-blue'></i> Excepciones Operativas", unsafe_allow_html=True)
                 st.write("Administración integral de asignaciones suplementarias y bloqueos temporales.")
                 
                 reservas_actuales = cargar_reservas()
@@ -478,9 +508,9 @@ else:
                     
                     if submit_reserva:
                         if not motivo or not bloques_reserva:
-                            st.error("Campos compulsorios no cumplimentados. Se requiere Justificación y Esquema.")
+                            mostrar_alerta("Campos compulsorios no cumplimentados. Se requiere Justificación y Esquema.", "error", "fa-circle-xmark")
                         elif fecha_fin < fecha_inicio:
-                            st.error("Discordancia de validación: La fecha de término es previa a su activación.")
+                            mostrar_alerta("Discordancia de validación: La fecha de término es previa a su activación.", "error", "fa-circle-xmark")
                         else:
                             nueva_reserva = {
                                 "id": str(datetime.datetime.now().timestamp()),
@@ -512,9 +542,9 @@ else:
                                 st.rerun()
                         st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
                 else:
-                    st.info("Sin registros subyacentes operativos.")
+                    mostrar_alerta("Sin registros subyacentes operativos.", "info", "fa-circle-info")
 
     except Exception as e:
         import traceback
-        st.error(f"Anomalía severa de ejecución en el aplicativo. Origen de evento adverso: {e}")
+        mostrar_alerta(f"Anomalía severa de ejecución en el aplicativo. Origen de evento adverso: {e}", "error", "fa-bug")
         st.code(traceback.format_exc())
