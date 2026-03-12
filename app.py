@@ -118,7 +118,6 @@ RESERVAS_FILE = os.path.join(DATA_DIR, "reservas_temporales.json")
 def mostrar_alerta(mensaje, tipo="info", icono="fa-info-circle"):
     css_class = f"alert-custom alert-{tipo}-custom"
     color_icon = "text-blue" if tipo == "info" else "text-orange" if tipo == "warning" else ""
-    # Override de color para ícono si es success/error
     st.markdown(f"<div class='{css_class}'><i class='fa-solid {icono} {color_icon}' style='margin-right:8px;'></i> {mensaje}</div>", unsafe_allow_html=True)
 
 def cargar_reservas():
@@ -168,94 +167,35 @@ modo_nocturno = st.sidebar.toggle("Modo Nocturno", value=False)
 if modo_nocturno:
     st.markdown("""
     <style>
-        /* Variables y colores para Modo Nocturno */
         [data-testid="stAppViewContainer"], .stApp { background-color: #0F172A; color: #F8FAFC; }
         [data-testid="stHeader"] { background-color: transparent; }
         [data-testid="stSidebar"] { background-color: #1E293B; }
-        
         body, p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #E2E8F0 !important; }
-        
         .titulo-principal { color: #FFFFFF !important; }
         .titulo-principal i { color: #60A5FA !important; }
         .subtitulo { color: #CBD5E1 !important; }
         .text-blue { color: #60A5FA !important; }
         .text-orange { color: #FB923C !important; }
-        
-        .tarjeta-aula {
-            background-color: #1E293B !important;
-            border: 1px solid #334155 !important;
-            color: #F1F5F9 !important;
-            border-bottom: 3px solid #60A5FA !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
-        }
-        
-        .metric-container {
-            background-color: #1E293B !important;
-            color: #F8FAFC !important;
-            border: 1px solid #334155 !important;
-            border-left: 4px solid #FB923C !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
-        }
-        
-        /* Alertas en Modo Oscuro */
+        .tarjeta-aula { background-color: #1E293B !important; border: 1px solid #334155 !important; color: #F1F5F9 !important; border-bottom: 3px solid #60A5FA !important; box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; }
+        .metric-container { background-color: #1E293B !important; color: #F8FAFC !important; border: 1px solid #334155 !important; border-left: 4px solid #FB923C !important; box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; }
         .alert-info-custom { background-color: #082F49 !important; color: #E0F2FE !important; border-left-color: #38BDF8 !important; }
         .alert-success-custom { background-color: #14532D !important; color: #DCFCE7 !important; border-left-color: #4ADE80 !important; }
         .alert-warning-custom { background-color: #7C2D12 !important; color: #FFEDD5 !important; border-left-color: #FB923C !important; }
         .alert-error-custom { background-color: #7F1D1D !important; color: #FEE2E2 !important; border-left-color: #F87171 !important; }
-        
-        /* Ajuste de Pestañas */
         .stTabs [data-baseweb="tab"] { background-color: transparent !important; }
         .stTabs [data-baseweb="tab"] p, .stTabs [data-baseweb="tab"] span { color: #94A3B8 !important; }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] p, .stTabs [data-baseweb="tab"][aria-selected="true"] span {
-            color: #FB923C !important;
-        }
-        
-        /* Elementos nativos de Streamlit */
-        .stTextInput > div > div > input, .stSelectbox > div > div > div, .stNumberInput > div > div > input, .stDateInput > div > div > input, .stTimeInput > div > div > input {
-            background-color: #334155 !important;
-            color: #FFFFFF !important;
-            border-color: #475569 !important;
-        }
-        
-        .stMultiSelect div[data-baseweb="select"] > div {
-            background-color: #334155 !important;
-            border-color: #475569 !important;
-        }
-        
-        /* Corregir listas desplegables (Selectbox, Multiselect) */
-        div[role="listbox"], ul[data-baseweb="menu"], [data-baseweb="popover"] > div, [data-baseweb="popover"] ul {
-            background-color: #1E293B !important;
-        }
-        li[role="option"] {
-            color: #F8FAFC !important;
-            background-color: transparent !important;
-        }
-        li[role="option"]:hover, li[role="option"][aria-selected="true"] {
-            background-color: #334155 !important;
-            color: #FB923C !important;
-        }
-        
-        /* Uploader de archivos */
-        [data-testid="stFileUploadDropzone"] {
-            background-color: #1E293B !important;
-            border-color: #475569 !important;
-        }
-        [data-testid="stFileUploadDropzone"] div, [data-testid="stFileUploadDropzone"] small, [data-testid="stFileUploadDropzone"] span {
-            color: #F8FAFC !important;
-        }
-        
-        .stRadio label, .stCheckbox label {
-            color: #E2E8F0 !important;
-        }
-        
-        /* Ocultar posibles artefactos visuales blancos */
+        .stTabs [data-baseweb="tab"][aria-selected="true"] p, .stTabs [data-baseweb="tab"][aria-selected="true"] span { color: #FB923C !important; }
+        .stTextInput > div > div > input, .stSelectbox > div > div > div, .stNumberInput > div > div > input, .stDateInput > div > div > input, .stTimeInput > div > div > input { background-color: #334155 !important; color: #FFFFFF !important; border-color: #475569 !important; }
+        .stMultiSelect div[data-baseweb="select"] > div { background-color: #334155 !important; border-color: #475569 !important; }
+        div[role="listbox"], ul[data-baseweb="menu"], [data-baseweb="popover"] > div, [data-baseweb="popover"] ul { background-color: #1E293B !important; }
+        li[role="option"] { color: #F8FAFC !important; background-color: transparent !important; }
+        li[role="option"]:hover, li[role="option"][aria-selected="true"] { background-color: #334155 !important; color: #FB923C !important; }
+        [data-testid="stFileUploadDropzone"] { background-color: #1E293B !important; border-color: #475569 !important; }
+        [data-testid="stFileUploadDropzone"] div, [data-testid="stFileUploadDropzone"] small, [data-testid="stFileUploadDropzone"] span { color: #F8FAFC !important; }
+        .stRadio label, .stCheckbox label { color: #E2E8F0 !important; }
         section[data-testid="stSidebar"] div.stRadio > div { background-color: transparent !important; }
-        
     </style>
-    <script>
-        // Pequeño hack para forzar renderización del body completo si es necesario
-        document.body.style.backgroundColor = "#0F172A";
-    </script>
+    <script>document.body.style.backgroundColor = "#0F172A";</script>
     """, unsafe_allow_html=True)
 
 st.markdown('<p class="titulo-principal"><i class="fa-solid fa-building-columns text-blue"></i> Gestor Académico UNICEN</p>', unsafe_allow_html=True)
@@ -299,7 +239,6 @@ def parse_time(time_str):
         return None
 
 def en_rango_horario(hora_str, hora_obj):
-    """Verifica si un objeto datetime.time está dentro del string 'HH:MM:SS - HH:MM:SS'"""
     try:
         partes = str(hora_str).split("-")
         if len(partes) == 2:
@@ -346,7 +285,6 @@ else:
             re_docente = re.compile(r'DOCENTE\s*:([^:]+)(?:MATERIA\s*:|GRUPO\s*:|$)')
             re_materia = re.compile(r'MATERIA\s*:([^:]+)(?:GRUPO\s*:|DOCENTE\s*:|$)')
             
-            # 4. Creación de las 4 Pestañas
             tab_libres, tab_busqueda, tab_auditoria, tab_ahora, tab_reservas = st.tabs([
                 "Disponibilidad de Aulas", 
                 "Consulta de Asignaciones", 
@@ -427,27 +365,43 @@ else:
                                             
                             aulas_comunes = sorted(list(aulas_comunes)) if aulas_comunes else []
                             
+                            # FILTRO MAESTRO REESCRITO (Antibombas: Ignora espacios y formatea fechas por fuerza bruta)
                             if "Específica" in modo_busqueda and fecha_sel:
                                 reservas = cargar_reservas()
                                 aulas_finales = []
+                                
+                                # Limpieza robusta de los bloques que el usuario está buscando (quita todos los espacios)
+                                blq_sel_limpios = [str(x).replace(" ", "").upper() for x in bloques_sel]
+                                t_sel_limpio = str(torre_sel).replace(" ", "").upper()
+                                
                                 for aula in aulas_comunes:
                                     esta_reservada = False
+                                    a_check_limpio = str(aula).replace(" ", "").upper()
+                                    
                                     for res in reservas:
                                         try:
-                                            res_inicio = datetime.date.fromisoformat(res['fecha_inicio'])
-                                            res_fin = datetime.date.fromisoformat(res['fecha_fin'])
+                                            # Parseo seguro de fecha con pandas (evita que fromisoformat colapse)
+                                            res_inicio = pd.to_datetime(res.get('fecha_inicio', '1900-01-01')).date()
+                                            res_fin = pd.to_datetime(res.get('fecha_fin', '2100-01-01')).date()
+                                            
                                             if res_inicio <= fecha_sel <= res_fin:
-                                                t_res = str(res['torre']).upper().strip()
-                                                a_res = str(res['aula']).upper().strip()
-                                                a_check = str(aula).upper().strip()
+                                                # Limpieza extrema de la torre y aula guardada en la reserva
+                                                t_res_limpio = str(res.get('torre', '')).replace(" ", "").upper()
+                                                a_res_limpio = str(res.get('aula', '')).replace(" ", "").upper()
                                                 
-                                                if t_res == torre_sel.upper().strip() and a_res == a_check:
-                                                    if any(b in bloques_sel for b in res['bloques']):
+                                                # Si la torre y aula coinciden exactamente
+                                                if t_res_limpio == t_sel_limpio and a_res_limpio == a_check_limpio:
+                                                    # Limpieza de los bloques guardados en la reserva
+                                                    blq_res_limpios = [str(x).replace(" ", "").upper() for x in res.get('bloques', [])]
+                                                    
+                                                    # Si ALGÚN bloque de la reserva coincide con ALGÚN bloque buscado, hay choque
+                                                    if any(b in blq_sel_limpios for b in blq_res_limpios):
                                                         esta_reservada = True
                                                         break
                                         except Exception:
                                             pass
                                     
+                                    # Si pasó todos los filtros y no está reservada, se agrega a la lista final
                                     if not esta_reservada:
                                         aulas_finales.append(aula)
                                 
@@ -477,7 +431,7 @@ else:
                 
                 c1, c2 = st.columns(2)
                 with c1: sel_docente = st.selectbox("Docente Asignado:", [""] + sorted(list(docentes)))
-                with c2: sel_materia = st.selectbox("Materias:", [""] + sorted(list(materias)))
+                with c2: sel_materia = st.selectbox("Unidad Académica:", [""] + sorted(list(materias)))
                 
                 col_btn, _, _ = st.columns([1,1,1])
                 with col_btn:
