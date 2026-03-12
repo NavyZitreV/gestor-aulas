@@ -76,6 +76,35 @@ st.markdown("""
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
         color: #EA580C;
     }
+    
+    /* === Sobrescribir color base de Streamlit (Rojo -> Naranja) === */
+    /* Botones primarios */
+    button[kind="primary"] {
+        background-color: #EA580C !important;
+        border-color: #EA580C !important;
+        color: #FFFFFF !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #C2410C !important;
+        border-color: #C2410C !important;
+    }
+    /* Etiquetas del multiselect */
+    span[data-baseweb="tag"] {
+        background-color: #EA580C !important;
+    }
+    /* Selecciones de radio y checkbox */
+    div[data-baseweb="radio"] div[data-checked="true"] > div {
+        background-color: #EA580C !important;
+        border-color: #EA580C !important;
+    }
+    .stCheckbox [data-baseweb="checkbox"] [data-checked="true"] > div {background-color: #EA580C !important; border-color: #EA580C !important;}
+    
+    /* Iconos FontAwesome en pestañas directamente vía CSS */
+    button[data-baseweb="tab"]:nth-child(1) p::before, button[data-baseweb="tab"]:nth-child(1) span::before { content: "\f52b"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; }
+    button[data-baseweb="tab"]:nth-child(2) p::before, button[data-baseweb="tab"]:nth-child(2) span::before { content: "\f002"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; }
+    button[data-baseweb="tab"]:nth-child(3) p::before, button[data-baseweb="tab"]:nth-child(3) span::before { content: "\f46c"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; }
+    button[data-baseweb="tab"]:nth-child(4) p::before, button[data-baseweb="tab"]:nth-child(4) span::before { content: "\f3c5"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; }
+    button[data-baseweb="tab"]:nth-child(5) p::before, button[data-baseweb="tab"]:nth-child(5) span::before { content: "\f073"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -131,6 +160,81 @@ archivo_activo = obtener_archivo_guardado()
 
 if archivo_activo:
     st.sidebar.markdown(f'<div class="alert-custom alert-success-custom"><i class="fa-solid fa-database"></i> Origen de datos: {os.path.basename(archivo_activo)}</div>', unsafe_allow_html=True)
+
+st.sidebar.markdown('<hr style="margin:20px 0;">', unsafe_allow_html=True)
+st.sidebar.markdown('<h4 style="color:#1E3A8A; font-weight:600;"><i class="fa-solid fa-palette text-orange"></i> Preferencias Visuales</h4>', unsafe_allow_html=True)
+modo_nocturno = st.sidebar.toggle("Modo Nocturno", value=False)
+
+if modo_nocturno:
+    st.markdown("""
+    <style>
+        /* Variables y colores para Modo Nocturno */
+        [data-testid="stAppViewContainer"], .stApp { background-color: #0F172A; color: #F8FAFC; }
+        [data-testid="stHeader"] { background-color: transparent; }
+        [data-testid="stSidebar"] { background-color: #1E293B; }
+        
+        body, p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #E2E8F0 !important; }
+        
+        .titulo-principal { color: #FFFFFF !important; }
+        .titulo-principal i { color: #60A5FA !important; }
+        .subtitulo { color: #CBD5E1 !important; }
+        .text-blue { color: #60A5FA !important; }
+        .text-orange { color: #FB923C !important; }
+        
+        .tarjeta-aula {
+            background-color: #1E293B !important;
+            border: 1px solid #334155 !important;
+            color: #F1F5F9 !important;
+            border-bottom: 3px solid #60A5FA !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+        }
+        
+        .metric-container {
+            background-color: #1E293B !important;
+            color: #F8FAFC !important;
+            border: 1px solid #334155 !important;
+            border-left: 4px solid #FB923C !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+        }
+        
+        /* Alertas en Modo Oscuro */
+        .alert-info-custom { background-color: #082F49 !important; color: #E0F2FE !important; border-left-color: #38BDF8 !important; }
+        .alert-success-custom { background-color: #14532D !important; color: #DCFCE7 !important; border-left-color: #4ADE80 !important; }
+        .alert-warning-custom { background-color: #7C2D12 !important; color: #FFEDD5 !important; border-left-color: #FB923C !important; }
+        .alert-error-custom { background-color: #7F1D1D !important; color: #FEE2E2 !important; border-left-color: #F87171 !important; }
+        
+        /* Ajuste de Pestañas */
+        .stTabs [data-baseweb="tab"] { background-color: transparent !important; }
+        .stTabs [data-baseweb="tab"] p, .stTabs [data-baseweb="tab"] span { color: #94A3B8 !important; }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] p, .stTabs [data-baseweb="tab"][aria-selected="true"] span {
+            color: #FB923C !important;
+        }
+        
+        /* Elementos nativos de Streamlit */
+        .stTextInput > div > div > input, .stSelectbox > div > div > div, .stNumberInput > div > div > input, .stDateInput > div > div > input, .stTimeInput > div > div > input {
+            background-color: #334155 !important;
+            color: #FFFFFF !important;
+            border-color: #475569 !important;
+        }
+        
+        .stMultiSelect div[data-baseweb="select"] > div {
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+        }
+        
+        .stRadio label, .stCheckbox label {
+            color: #E2E8F0 !important;
+        }
+        
+        /* Ocultar posibles artefactos visuales blancos */
+        section[data-testid="stSidebar"] div.stRadio > div { background-color: transparent !important; }
+        
+    </style>
+    <script>
+        // Pequeño hack para forzar renderización del body completo si es necesario
+        document.body.style.backgroundColor = "#0F172A";
+    </script>
+    """, unsafe_allow_html=True)
 
 st.markdown('<p class="titulo-principal"><i class="fa-solid fa-building-columns text-blue"></i> Gestor Académico UNICEN</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitulo"><i class="fa-solid fa-chart-network text-orange"></i> Sistema integral de consulta, auditoría y seguimiento de asignaciones de aulas e infraestructura.</p>', unsafe_allow_html=True)
