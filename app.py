@@ -78,25 +78,10 @@ st.markdown("""
     }
     
     /* === Sobrescribir color base de Streamlit (Rojo -> Naranja) === */
-    /* Botones primarios */
-    button[kind="primary"] {
-        background-color: #EA580C !important;
-        border-color: #EA580C !important;
-        color: #FFFFFF !important;
-    }
-    button[kind="primary"]:hover {
-        background-color: #C2410C !important;
-        border-color: #C2410C !important;
-    }
-    /* Etiquetas del multiselect */
-    span[data-baseweb="tag"] {
-        background-color: #EA580C !important;
-    }
-    /* Selecciones de radio y checkbox */
-    div[data-baseweb="radio"] div[data-checked="true"] > div {
-        background-color: #EA580C !important;
-        border-color: #EA580C !important;
-    }
+    button[kind="primary"] { background-color: #EA580C !important; border-color: #EA580C !important; color: #FFFFFF !important; }
+    button[kind="primary"]:hover { background-color: #C2410C !important; border-color: #C2410C !important; }
+    span[data-baseweb="tag"] { background-color: #EA580C !important; }
+    div[data-baseweb="radio"] div[data-checked="true"] > div { background-color: #EA580C !important; border-color: #EA580C !important; }
     .stCheckbox [data-baseweb="checkbox"] [data-checked="true"] > div {background-color: #EA580C !important; border-color: #EA580C !important;}
     
     /* Iconos FontAwesome en pestañas directamente vía CSS */
@@ -142,7 +127,7 @@ def obtener_archivo_guardado():
 
 # Barra lateral para carga
 st.sidebar.markdown('<h3><i class="fa-solid fa-server text-blue"></i> Base de Datos</h3>', unsafe_allow_html=True)
-st.sidebar.markdown('<div class="alert-custom alert-info-custom"><i class="fa-solid fa-cloud-arrow-up text-blue"></i> El sistema almacenará el último archivo cargado para evitar subidas recurrentes.</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="alert-custom alert-info-custom"><i class="fa-solid fa-cloud-arrow-up text-blue"></i> El sistema almacenará el último archivo cargado.</div>', unsafe_allow_html=True)
 uploaded_file = st.sidebar.file_uploader("Actualizar archivo de horarios (.xlsx, .csv)", type=["xlsx", "csv"])
 
 if uploaded_file is not None:
@@ -153,7 +138,7 @@ if uploaded_file is not None:
     with open(ruta_guardado, "wb") as f:
         f.write(uploaded_file.getbuffer())
     
-    st.sidebar.markdown('<div class="alert-custom alert-success-custom"><i class="fa-solid fa-check"></i> Archivo almacenado correctamente.</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="alert-custom alert-success-custom"><i class="fa-solid fa-check"></i> Archivo almacenado.</div>', unsafe_allow_html=True)
 
 archivo_activo = obtener_archivo_guardado()
 
@@ -161,7 +146,7 @@ if archivo_activo:
     st.sidebar.markdown(f'<div class="alert-custom alert-success-custom"><i class="fa-solid fa-database"></i> Origen de datos: {os.path.basename(archivo_activo)}</div>', unsafe_allow_html=True)
 
 st.sidebar.markdown('<hr style="margin:20px 0;">', unsafe_allow_html=True)
-st.sidebar.markdown('<h4 style="color:#1E3A8A; font-weight:600;"><i class="fa-solid fa-palette text-orange"></i> Preferencias Visuales</h4>', unsafe_allow_html=True)
+st.sidebar.markdown('<h4 style="color:#1E3A8A; font-weight:600;"><i class="fa-solid fa-palette text-orange"></i> Preferencias</h4>', unsafe_allow_html=True)
 modo_nocturno = st.sidebar.toggle("Modo Nocturno", value=False)
 
 if modo_nocturno:
@@ -365,14 +350,15 @@ else:
                                             
                             aulas_comunes = sorted(list(aulas_comunes)) if aulas_comunes else []
                             
-                            # FILTRO MAESTRO REESCRITO (Antibombas: Ignora espacios y formatea fechas por fuerza bruta)
+                            # FILTRO MAESTRO REESCRITO (Antibombas e Inmune a versiones viejas de JSON)
                             if "Específica" in modo_busqueda and fecha_sel:
                                 reservas = cargar_reservas()
                                 aulas_finales = []
                                 
-                                # Limpieza robusta de los bloques que el usuario está buscando (quita todos los espacios)
+                                # Limpiamos los espacios de la búsqueda del usuario
                                 blq_sel_limpios = [str(x).replace(" ", "").upper() for x in bloques_sel]
                                 t_sel_limpio = str(torre_sel).replace(" ", "").upper()
+                                fecha_sel_str = fecha_sel.strftime("%Y-%m-%d")
                                 
                                 for aula in aulas_comunes:
                                     esta_reservada = False
@@ -380,28 +366,37 @@ else:
                                     
                                     for res in reservas:
                                         try:
-                                            # Parseo seguro de fecha con pandas (evita que fromisoformat colapse)
-                                            res_inicio = pd.to_datetime(res.get('fecha_inicio', '1900-01-01')).date()
-                                            res_fin = pd.to_datetime(res.get('fecha_fin', '2100-01-01')).date()
+                                            # Extracción compatible con keys antiguas (Torre, TORRE, torre)
+                                            f_ini_raw = res.get('fecha_inicio') or res.get('Fecha Inicio') or res.get('fechaInicio') or "1900-01-01"
+                                            f_fin_raw = res.get('fecha_fin') or res.get('Fecha Fin') or res.get('fechaFin') or "2100-01-01"
+                                            t_raw = res.get('torre') or res.get('Torre') or res.get('TORRE') or ""
+                                            a_raw = res.get('aula') or res.get('Aula') or res.get('AULA') or ""
+                                            b_raw = res.get('bloques') or res.get('Bloques') or res.get('Franjas Horarias Afectadas') or []
                                             
-                                            if res_inicio <= fecha_sel <= res_fin:
-                                                # Limpieza extrema de la torre y aula guardada en la reserva
-                                                t_res_limpio = str(res.get('torre', '')).replace(" ", "").upper()
-                                                a_res_limpio = str(res.get('aula', '')).replace(" ", "").upper()
+                                            # Usamos string ISO (YYYY-MM-DD) directo. 100% libre de fallos de parseo.
+                                            f_ini_str = str(f_ini_raw)[:10]
+                                            f_fin_str = str(f_fin_raw)[:10]
+                                            
+                                            # ¿La fecha a buscar está dentro del rango de la reserva?
+                                            if f_ini_str <= fecha_sel_str <= f_fin_str:
                                                 
-                                                # Si la torre y aula coinciden exactamente
+                                                t_res_limpio = str(t_raw).replace(" ", "").upper()
+                                                a_res_limpio = str(a_raw).replace(" ", "").upper()
+                                                
+                                                # ¿Es la misma torre y la misma aula?
                                                 if t_res_limpio == t_sel_limpio and a_res_limpio == a_check_limpio:
-                                                    # Limpieza de los bloques guardados en la reserva
-                                                    blq_res_limpios = [str(x).replace(" ", "").upper() for x in res.get('bloques', [])]
                                                     
-                                                    # Si ALGÚN bloque de la reserva coincide con ALGÚN bloque buscado, hay choque
+                                                    # Limpiamos los bloques guardados en el JSON
+                                                    blq_res_limpios = [str(x).replace(" ", "").upper() for x in b_raw]
+                                                    
+                                                    # Si hay AL MENOS UNA coincidencia de horario, el aula se bloquea
                                                     if any(b in blq_sel_limpios for b in blq_res_limpios):
                                                         esta_reservada = True
                                                         break
                                         except Exception:
                                             pass
                                     
-                                    # Si pasó todos los filtros y no está reservada, se agrega a la lista final
+                                    # Si pasó todas las validaciones sin chocar con una reserva, se muestra disponible
                                     if not esta_reservada:
                                         aulas_finales.append(aula)
                                 
@@ -609,15 +604,27 @@ else:
                 st.markdown("---")
                 st.subheader("Registros Hábiles en Matriz")
                 if reservas_actuales:
-                    for res in reservas_actuales:
+                    # Mapeo invertido (pop seguro mediante index)
+                    for i in reversed(range(len(reservas_actuales))):
+                        res = reservas_actuales[i]
+                        # Soporte para keys antiguas
+                        m_txt = res.get('motivo') or res.get('Motivo') or 'Sin motivo'
+                        t_txt = res.get('torre') or res.get('Torre') or 'N/A'
+                        a_txt = res.get('aula') or res.get('Aula') or 'N/A'
+                        f_ini_txt = str(res.get('fecha_inicio') or res.get('Fecha Inicio') or '')[:10]
+                        f_fin_txt = str(res.get('fecha_fin') or res.get('Fecha Fin') or '')[:10]
+                        b_txt_list = res.get('bloques') or res.get('Bloques') or []
+                        
                         with st.container():
                             c1, c2, c3, c4, c5 = st.columns([2, 2, 2, 3, 1])
-                            c1.markdown(f"**{res['motivo']}**")
-                            c2.markdown(f"{res['torre']} - {res['aula']}")
-                            c3.markdown(f"{res['fecha_inicio']} a {res['fecha_fin']}")
-                            c4.markdown(f"{', '.join(res['bloques'])}")
-                            if c5.button("Revocar", key=f"del_{res['id']}"):
-                                reservas_actuales = [r for r in reservas_actuales if r['id'] != res['id']]
+                            c1.markdown(f"**{m_txt}**")
+                            c2.markdown(f"{t_txt} - {a_txt}")
+                            c3.markdown(f"{f_ini_txt} a {f_fin_txt}")
+                            c4.markdown(f"{', '.join(b_txt_list)}")
+                            
+                            res_id = res.get('id', f"old_{i}")
+                            if c5.button("Revocar", key=f"del_{res_id}"):
+                                reservas_actuales.pop(i)
                                 guardar_reservas(reservas_actuales)
                                 st.rerun()
                         st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
