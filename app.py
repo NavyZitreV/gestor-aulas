@@ -223,7 +223,7 @@ if modo_nocturno:
         }
         
         /* Corregir listas desplegables (Selectbox, Multiselect) */
-        div[role="listbox"], ul[data-baseweb="menu"] {
+        div[role="listbox"], ul[data-baseweb="menu"], [data-baseweb="popover"] > div, [data-baseweb="popover"] ul {
             background-color: #1E293B !important;
         }
         li[role="option"] {
@@ -477,7 +477,7 @@ else:
                 
                 c1, c2 = st.columns(2)
                 with c1: sel_docente = st.selectbox("Docente Asignado:", [""] + sorted(list(docentes)))
-                with c2: sel_materia = st.selectbox("Unidad Académica:", [""] + sorted(list(materias)))
+                with c2: sel_materia = st.selectbox("Materias:", [""] + sorted(list(materias)))
                 
                 col_btn, _, _ = st.columns([1,1,1])
                 with col_btn:
