@@ -222,6 +222,28 @@ if modo_nocturno:
             border-color: #475569 !important;
         }
         
+        /* Corregir listas desplegables (Selectbox, Multiselect) */
+        div[role="listbox"], ul[data-baseweb="menu"] {
+            background-color: #1E293B !important;
+        }
+        li[role="option"] {
+            color: #F8FAFC !important;
+            background-color: transparent !important;
+        }
+        li[role="option"]:hover, li[role="option"][aria-selected="true"] {
+            background-color: #334155 !important;
+            color: #FB923C !important;
+        }
+        
+        /* Uploader de archivos */
+        [data-testid="stFileUploadDropzone"] {
+            background-color: #1E293B !important;
+            border-color: #475569 !important;
+        }
+        [data-testid="stFileUploadDropzone"] div, [data-testid="stFileUploadDropzone"] small, [data-testid="stFileUploadDropzone"] span {
+            color: #F8FAFC !important;
+        }
+        
         .stRadio label, .stCheckbox label {
             color: #E2E8F0 !important;
         }
