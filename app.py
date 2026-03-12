@@ -127,7 +127,7 @@ def en_rango_horario(hora_str, hora_obj):
             if inicio and fin:
                 return inicio <= hora_obj <= fin
     except Exception as e:
-        print(f"Error parsing time range: {hora_str} - {e}")
+        pass
     return False
 
 @st.cache_data
@@ -177,15 +177,24 @@ else:
             
             # --- PESTAÑA 1: AULAS LIBRES ---
             with tab_libres:
+                modo_busqueda = st.radio("¿Modo de Búsqueda?", ["🗓️ Semestral (Por Día de la semana)", "📅 Específica (Por Fecha exacta)"], horizontal=True)
+                
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    fecha_sel = st.date_input("📅 Fecha a buscar:")
-                    dias_map = {0: "LUNES", 1: "MARTES", 2: "MIERCOLES", 3: "JUEVES", 4: "VIERNES", 5: "SABADO", 6: "DOMINGO"}
-                    dia_busqueda = dias_map[fecha_sel.weekday()]
-                    st.info(f"Día de la semana deducido: **{dia_busqueda}**")
-                    dias_sel = [dia_busqueda] if dia_busqueda in dias_presentes else []
+                    if "Semestral" in modo_busqueda:
+                        dias_sel = st.multiselect("📅 Día(s) de la semana:", dias_semana, default=["LUNES"])
+                        fecha_sel = None
+                        st.caption("Búsqueda base del semestre. No considera reservas temporales.")
+                    else:
+                        fecha_sel = st.date_input("📅 Fecha a buscar:")
+                        dias_map = {0: "LUNES", 1: "MARTES", 2: "MIERCOLES", 3: "JUEVES", 4: "VIERNES", 5: "SABADO", 6: "DOMINGO"}
+                        dia_busqueda = dias_map[fecha_sel.weekday()]
+                        st.success(f"Día detectado: **{dia_busqueda}**")
+                        dias_sel = [dia_busqueda] if dia_busqueda in dias_presentes else []
+                        
                 with col2:
                     torre_sel = st.selectbox("🏢 Torre / Edificio:", torres) if torres else st.selectbox("🏢 Torre / Edificio:", ["N/A"])
+                    
                 with col3:
                     todos_los_bloques = {}
                     todos_los_bloques.update(MAPEO_REGULAR)
@@ -199,7 +208,10 @@ else:
                 if st.button("🔍 Buscar Aulas Libres", use_container_width=True, type="primary"):
                     st.markdown("<hr style='margin-top:0px; margin-bottom:25px;'>", unsafe_allow_html=True)
                     if not dias_sel:
-                        st.warning(f"⚠️ El día deducido ({dia_busqueda}) no tiene horarios registrados en la base de datos.")
+                        if "Específica" in modo_busqueda:
+                            st.warning(f"⚠️ El día deducido ({dia_busqueda}) no tiene horarios registrados en la base de datos.")
+                        else:
+                            st.warning("⚠️ Selecciona al menos un día.")
                     elif not bloques_sel:
                         st.warning("⚠️ Selecciona al menos una franja horaria.")
                     elif not torres:
@@ -231,33 +243,34 @@ else:
                                             
                             aulas_comunes = sorted(list(aulas_comunes)) if aulas_comunes else []
                             
-                            # Filtro Maestro: Cruce con Reservas Temporales
-                            reservas = cargar_reservas()
-                            aulas_finales = []
-                            for aula in aulas_comunes:
-                                esta_reservada = False
-                                for res in reservas:
-                                    try:
-                                        res_inicio = datetime.date.fromisoformat(res['fecha_inicio'])
-                                        res_fin = datetime.date.fromisoformat(res['fecha_fin'])
-                                        if res_inicio <= fecha_sel <= res_fin:
-                                            # Chequear misma torre y aula
-                                            t_res = str(res['torre']).upper().strip()
-                                            a_res = str(res['aula']).upper().strip()
-                                            a_check = str(aula).upper().strip()
-                                            
-                                            if t_res == torre_sel.upper().strip() and a_res == a_check:
-                                                # Chequear solapamiento en franjas horarias
-                                                if any(b in bloques_sel for b in res['bloques']):
-                                                    esta_reservada = True
-                                                    break
-                                    except Exception as e:
-                                        pass
+                            # Filtro Maestro: Cruce con Reservas Temporales (SOLO si el modo es "Específica")
+                            if "Específica" in modo_busqueda and fecha_sel:
+                                reservas = cargar_reservas()
+                                aulas_finales = []
+                                for aula in aulas_comunes:
+                                    esta_reservada = False
+                                    for res in reservas:
+                                        try:
+                                            res_inicio = datetime.date.fromisoformat(res['fecha_inicio'])
+                                            res_fin = datetime.date.fromisoformat(res['fecha_fin'])
+                                            if res_inicio <= fecha_sel <= res_fin:
+                                                # Chequear misma torre y aula
+                                                t_res = str(res['torre']).upper().strip()
+                                                a_res = str(res['aula']).upper().strip()
+                                                a_check = str(aula).upper().strip()
+                                                
+                                                if t_res == torre_sel.upper().strip() and a_res == a_check:
+                                                    # Chequear solapamiento en franjas horarias
+                                                    if any(b in bloques_sel for b in res['bloques']):
+                                                        esta_reservada = True
+                                                        break
+                                        except Exception as e:
+                                            pass
+                                    
+                                    if not esta_reservada:
+                                        aulas_finales.append(aula)
                                 
-                                if not esta_reservada:
-                                    aulas_finales.append(aula)
-                            
-                            aulas_comunes = aulas_finales
+                                aulas_comunes = aulas_finales
 
                             if aulas_comunes:
                                 st.markdown(f'<div class="metric-container">✅ {len(aulas_comunes)} Aulas Disponibles</div>', unsafe_allow_html=True)
@@ -281,7 +294,7 @@ else:
                             if m_mat: materias.add(re.sub(r'[-]+$', '', m_mat.group(1)).strip())
                 
                 c1, c2 = st.columns(2)
-                with c1: sel_docente = st.selectbox("👨🏫 Docente:", [""] + sorted(list(docentes)))
+                with c1: sel_docente = st.selectbox("👨‍🏫 Docente:", [""] + sorted(list(docentes)))
                 with c2: sel_materia = st.selectbox("📚 Materia:", [""] + sorted(list(materias)))
                 
                 if st.button("Buscar Clases", type="primary"):
@@ -387,8 +400,6 @@ else:
                         # Buscar en las filas donde la hora actual coincide
                         for index, row in df.iterrows():
                             hora_bloque = str(row.get("HR/DIA", "")).strip()
-                            # hora_bloque format from excel might be "08:00 - 08:45"
-                            # the `en_rango_horario` function checks if `hora_actual` is in `hora_bloque`.
                             if en_rango_horario(hora_bloque, hora_actual):
                                 val_celda = str(row.get(dia_actual, "")).upper().strip()
                                 
